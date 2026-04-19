@@ -1,3 +1,5 @@
 *.zip
 synthea-mimic/
 env/
+__pycache__/
+*/__pycache__/
