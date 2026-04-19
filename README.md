@@ -15,7 +15,7 @@
 
 - Once inside the environment, install the requirements using `pip install -r requirements.txt`
 
-- Run the notebook _eda.ipynb_ to populate the _data/_ directory (you may have to create an empty directory at first)
+- Run the notebook _eda.ipynb_ to populate the _data/_ directory (you may have to create an empty directory at first) ***(SKIP IF DOWNLOADED WITH THE DATA DIRECTORY INTACT)***
 
 - Run the command `streamlit run dashboard.py`
 
