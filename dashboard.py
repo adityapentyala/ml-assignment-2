@@ -1,9 +1,13 @@
+import pickle
+from models.decision_tree import evaluate_decision_tree
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 import pandas as pd
 from utils import plot_histogram, plot_boxplot, plot_scatter
+import pickle
+from sklearn.model_selection import train_test_split
 
 st.set_page_config(layout="wide", page_title="Patient Classification Dashboard")
 
@@ -50,6 +54,8 @@ def load_dataframes():
     return historical_df, current_df
 
 historical_df, current_df = load_dataframes()
+_, _, _, historical_df = train_test_split(historical_df, historical_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
+_, _, _, current_df    = train_test_split(current_df, current_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
 
 COLUMNS = current_df.columns.drop("PATIENT").tolist()
 
@@ -65,12 +71,73 @@ def get_model_results(model_name: str) -> dict:
             "f1":        float,
         }
     """
-    dummy = {
-        "Decision Tree": dict(confusion_matrix=[[210, 40], [30, 180]], accuracy=0.87, precision=0.88, recall=0.84, f1=0.86),
-        "SVM":           dict(confusion_matrix=[[198, 52], [25, 185]], accuracy=0.85, precision=0.89, recall=0.79, f1=0.84),
-        "MLP":           dict(confusion_matrix=[[220, 30], [28, 182]], accuracy=0.89, precision=0.89, recall=0.88, f1=0.89),
+    model_filepath_map = {
+        "Decision Tree Historical": 'saved_models/best_decision_tree_historical.pkl',
+        "SVC Historical":           'saved_models/best_svc_historical.pkl',
+        "MLP Historical":           'saved_models/best_mlp_historical.pkl',
+        "Decision Tree Current":    'saved_models/finetuned_decision_tree_current.pkl',
+        "SVC Current":              'saved_models/finetuned_svc_current.pkl',
+        "MLP Current":              'saved_models/finetuned_mlp_current.pkl',
     }
-    return dummy.get(model_name, {})
+
+    model = pickle.load(open(model_filepath_map.get(model_name, ''), 'rb')) if model_name in model_filepath_map else None
+    df = historical_df if "Historical" in model_name else current_df
+    if model_name=="Decision Tree Historical":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+    elif model_name=="SVC Historical":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+    elif model_name=="MLP Historical":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+    elif model_name=="Decision Tree Current":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+    elif model_name=="SVC Current":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+    elif model_name=="MLP Current":
+        matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
+        return {
+            "confusion_matrix": matrix,
+            "accuracy": report["accuracy"],
+            "precision": report['macro avg']["precision"],
+            "recall": report['macro avg']["recall"],
+            "f1": report['macro avg']["f1-score"],
+        }
+
+    return model_filepath_map.get(model_name, {})
 
 
 def get_plot_figure(plot_type: str, dataset: str, col1: str, col2: str = None) -> go.Figure:
@@ -233,7 +300,7 @@ def render_model_panel(panel_id: str):
                 unsafe_allow_html=True)
 
     model = st.selectbox(
-        "Model", ["", "Decision Tree", "SVM", "MLP"],
+        "Model", ["", "Decision Tree Historical", "SVC Historical", "MLP Historical", "Decision Tree Current", "SVC Current", "MLP Current"],
         key=f"model_{panel_id}", label_visibility="collapsed"
     )
     st.caption("Select model")
