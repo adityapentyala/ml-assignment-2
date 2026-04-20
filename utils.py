@@ -2,7 +2,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 def plot_histogram(df, column):
-    fig = px.histogram(df, x=column, nbins=30, title=f'Histogram of {column}')
+    fig = px.histogram(df, x=column, nbins=70, title=f'Histogram of {column}')
     fig.update_layout(xaxis_title=column, yaxis_title='Count')
     return fig
 
