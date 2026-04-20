@@ -54,12 +54,12 @@ def load_dataframes():
     return historical_df, current_df
 
 historical_df, current_df = load_dataframes()
-_, _, _, historical_df = train_test_split(historical_df, historical_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
-_, _, _, current_df    = train_test_split(current_df, current_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
+#_, _, _, historical_df = train_test_split(historical_df, historical_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
+#_, _, _, current_df    = train_test_split(current_df, current_df["HIGH_EMERGENCY_RISK"], test_size=0.2, random_state=42)
 
 COLUMNS = current_df.columns.drop("PATIENT").tolist()
 
-def get_model_results(model_name: str) -> dict:
+def get_model_results(model_name: str, dataset: str) -> dict:
     """
     REPLACE THIS with your real model results.
     Must return:
@@ -81,7 +81,7 @@ def get_model_results(model_name: str) -> dict:
     }
 
     model = pickle.load(open(model_filepath_map.get(model_name, ''), 'rb')) if model_name in model_filepath_map else None
-    df = historical_df if "Historical" in model_name else current_df
+    df = historical_df if dataset=="Historical" else current_df
     if model_name=="Decision Tree Historical":
         matrix, report = evaluate_decision_tree(model, df.drop(columns=["EMERGENCY_ENCOUNTERS", "HIGH_EMERGENCY_RISK", "PATIENT"]), df["HIGH_EMERGENCY_RISK"]) 
         return {
@@ -299,14 +299,21 @@ def render_model_panel(panel_id: str):
     st.markdown(f'<div class="panel-label">Model {label} — confusion matrix &amp; metrics</div>',
                 unsafe_allow_html=True)
 
-    model = st.selectbox(
-        "Model", ["", "Decision Tree Historical", "SVC Historical", "MLP Historical", "Decision Tree Current", "SVC Current", "MLP Current"],
-        key=f"model_{panel_id}", label_visibility="collapsed"
-    )
-    st.caption("Select model")
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        model = st.selectbox(
+            "Model", ["", "Decision Tree Historical", "SVC Historical", "MLP Historical", "Decision Tree Current", "SVC Current", "MLP Current"],
+            key=f"model_{panel_id}", label_visibility="collapsed"
+        )
+        st.caption("Select model")
+    with c2:
+        data = st.selectbox("Dataset", ["", "Historical", "Current"],
+                            key=f"data_{panel_id}", label_visibility="collapsed")
+        st.caption("Select dataset")
 
-    if model:
-        result = get_model_results(model)
+
+    if model and data:
+        result = get_model_results(model, data)
         if result:
             cm_fig = plot_confusion_matrix(result["confusion_matrix"])
             st.plotly_chart(cm_fig, use_container_width=True, config={"displayModeBar": False})
